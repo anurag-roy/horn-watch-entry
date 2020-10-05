@@ -31,13 +31,12 @@ const order = (stock, price) => {
   console.log(`Time of order: ${timestamp.toUTCString()}`);
 };
 
-app.post("/watchHornExit", ({ body }, response) => {
-  console.log();
-  watchHornExit(body.stockA, body.stockB, body.stockC, body.stockD, Number(body.exitPrice));
+app.post("/watchHornEntry", ({ body }, response) => {
+  watchHornEntry(body.stockA, body.stockB, body.stockC, body.stockD, Number(body.entryPrice));
   response.send("Check console.");
 });
 
-const watchHornExit = (stockA, stockB, stockC, stockD, exitPrice) => {
+const watchHornEntry = (stockA, stockB, stockC, stockD, entryPrice) => {
   // Extract instruments tokens for each stock
   const aToken = parseInt(stockA.instrument_token);
   const bToken = parseInt(stockB.instrument_token);
@@ -50,33 +49,29 @@ const watchHornExit = (stockA, stockB, stockC, stockD, exitPrice) => {
   const cQty = stockC.quantity;
   const dQty = stockD.quantity;
 
-  // Extract position values for each stock
-  const aPv = stockA.positionValue;
-  const bPv = stockB.positionValue;
-  const cPv = stockC.positionValue;
-  const dPv = stockD.positionValue;
-
   // Declare variables which will be updated on each tick
-  let aSellersBid, bBuyersBid, cBuyersBid, dSellersBid;
+  let aBuyersBid, bSellersBid, cSellersBid, dBuyersBid;
 
   // Flag to determine if order is already placed or not
   let placedOrder = false;
 
-  // Exit Condition for HORN strategy
-  const lookForExit = () => {
-    const a = (0 + aPv - aSellersBid) * aQty;
-    const b = (0 - bPv + bBuyersBid) * bQty;
-    const c = (0 - cPv + cBuyersBid) * cQty;
-    const d = (0 + dPv - dSellersBid) * dQty;
+  // Entry Condition for HORN strategy
+  const lookForEntry = () => {
+    const a = aBuyersBid * aQty;
+    const b = bSellersBid * bQty;
+    const c = cSellersBid * cQty;
+    const d = dBuyersBid * dQty;
 
-    const net = (a + b + c + d) / 75;
+    const net = (a - b - c + d) / 75;
 
-    if (net > exitPrice) {
-      console.log(`Net: ${net}, Exit Price: ${exitPrice}. Condition satisfied. Would have exited.`);
+    if (net > entryPrice) {
+      console.log(
+        `Net: ${net}, Entry Price: ${entryPrice}. Condition satisfied. Would have entered.`,
+      );
       return true;
     }
 
-    console.log(`Net: ${net}, Exit Price: ${exitPrice}. Condition not satisfied.`);
+    console.log(`Net: ${net}, Entry Price: ${entryPrice}. Condition not satisfied.`);
     return false;
   };
 
@@ -88,7 +83,7 @@ const watchHornExit = (stockA, stockB, stockC, stockD, exitPrice) => {
   ticker.connect();
 
   ticker.on("connect", () => {
-    console.log("Subscribing to stocks...");
+    // console.log("Subscribing to stocks...");
     const items = [aToken, bToken, cToken, dToken];
     ticker.subscribe(items);
     ticker.setMode(ticker.modeFull, items);
@@ -97,43 +92,43 @@ const watchHornExit = (stockA, stockB, stockC, stockD, exitPrice) => {
   ticker.on("ticks", (ticks) => {
     if (!placedOrder) {
       // Check tick and update corresponding stock bid price
-      // 1st Seller's Bud for stock to BUY
+      // 2nd Seller's Bud for stock to BUY
       // 2nd Buyer's Bid for stock to SELL
       ticks.forEach((t) => {
         if (t.instrument_token == aToken) {
           if (t.depth) {
-            if (t.depth.sell) {
-              aSellersBid = t.depth.sell[0].price;
+            if (t.depth.buy) {
+              aBuyersBid = t.depth.buy[1].price;
             }
           }
         } else if (t.instrument_token == bToken) {
           if (t.depth) {
-            if (t.depth.buy) {
-              bBuyersBid = t.depth.buy[1].price;
+            if (t.depth.sell) {
+              bSellersBid = t.depth.sell[1].price;
             }
           }
         } else if (t.instrument_token == cToken) {
           if (t.depth) {
-            if (t.depth.buy) {
-              cBuyersBid = t.depth.buy[1].price;
+            if (t.depth.sell) {
+              cSellersBid = t.depth.sell[1].price;
             }
           }
         } else if (t.instrument_token == dToken) {
           if (t.depth) {
-            if (t.depth.sell) {
-              dSellersBid = t.depth.sell[0].price;
+            if (t.depth.buy) {
+              dBuyersBid = t.depth.buy[1].price;
             }
           }
         }
       });
 
-      // Look for Exit
-      if (lookForExit()) {
+      // Look for Entry
+      if (lookForEntry()) {
         placedOrder = true;
-        order(stockA, aSellersBid);
-        order(stockB, bBuyersBid);
-        order(stockC, cBuyersBid);
-        order(stockD, dSellersBid);
+        order(stockA, aBuyersBid);
+        order(stockB, bSellersBid);
+        order(stockC, cSellersBid);
+        order(stockD, dBuyersBid);
       }
     } else if (placedOrder) {
       ticker.disconnect();
@@ -141,6 +136,6 @@ const watchHornExit = (stockA, stockB, stockC, stockD, exitPrice) => {
   });
 };
 
-app.listen(4003, () => {
-  console.log("Horn Exit Watch started on http://localhost:4003");
+app.listen(4001, () => {
+  console.log("Horn Entry Watch started on http://localhost:4001");
 });

@@ -14,11 +14,10 @@ const StockInputForm = ({ label, tType, handleChange }) => {
   const [expiry, setExpiry] = useState("");
   const [iType, setIType] = useState("CE");
   const [quantity, setQuantity] = useState(75);
-  const [positionValue, setPositionValue] = useState(0);
 
   useEffect(() => {
     axios
-      .get("http://localhost:4003/mapper/byName", { params: { name: "NIFTY" } })
+      .get("http://localhost:4001/mapper/byName", { params: { name: "NIFTY" } })
       .then((result) => {
         setData(result.data);
       });
@@ -32,10 +31,9 @@ const StockInputForm = ({ label, tType, handleChange }) => {
         transactionType: tType,
         product: "NRML",
         quantity: parseInt(quantity),
-        positionValue: Number(positionValue),
       });
     }
-  }, [data, name, expiry, strikePrice, iType, tType, quantity, positionValue, handleChange]);
+  }, [data, name, expiry, strikePrice, iType, tType, quantity, handleChange]);
 
   const mapToStrikePrice = (stockArray) => {
     if (stockArray === []) return [];
@@ -141,19 +139,6 @@ const StockInputForm = ({ label, tType, handleChange }) => {
           }}
           variant="outlined"
           style={{ width: 100 }}
-        />
-      </div>
-      <div className="input_element">
-        <TextField
-          error={!Number(positionValue)}
-          id={`pv-${label}`}
-          label="P-Value"
-          variant="outlined"
-          value={positionValue}
-          style={{ width: 100 }}
-          onChange={(event) => {
-            setPositionValue(event.target.value);
-          }}
         />
       </div>
     </div>

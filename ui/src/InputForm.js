@@ -18,30 +18,22 @@ const InputForm = () => {
   const [stockC, setStockC] = useState();
   const [stockD, setStockD] = useState();
 
-  const [exitPrice, setExitPrice] = useState();
+  const [entryPrice, setEntryPrice] = useState();
 
   const proceedButton = () => {
-    console.log("stockA: ", stockA);
-    console.log("stockB: ", stockB);
-    console.log("stockC: ", stockC);
-    console.log("stockD: ", stockD);
-
     if (!stockA || !stockB || !stockC || !stockD) {
       alert("One or more invalid stocks selected. Please select valid stocks and try again.");
-    } else if (
-      !stockA.positionValue ||
-      !stockB.positionValue ||
-      !stockC.positionValue ||
-      !stockD.positionValue
-    ) {
-      alert(
-        "Missing position values for one or more stocks. Please input position values and try again.",
-      );
-    } else if (!exitPrice) {
-      alert("Missing exit price. Please input exit price and try again.");
+    } else if (!entryPrice) {
+      alert("Missing entry price. Please input entry price and try again.");
     } else {
       axios
-        .post("http://localhost:4003/watchHornExit", { stockA, stockB, stockC, stockD, exitPrice })
+        .post("http://localhost:4001/watchHornEntry", {
+          stockA,
+          stockB,
+          stockC,
+          stockD,
+          entryPrice,
+        })
         .then((data) => console.log(data))
         .catch((error) => console.error(error));
       setState("done");
@@ -52,23 +44,23 @@ const InputForm = () => {
     return (
       <div>
         <div className="form_container">
-          <StockInputForm label="A" tType="BUY" handleChange={setStockA} />
-          <StockInputForm label="B" tType="SELL" handleChange={setStockB} />
-          <StockInputForm label="C" tType="SELL" handleChange={setStockC} />
-          <StockInputForm label="D" tType="BUY" handleChange={setStockD} />
+          <StockInputForm label="A" tType="SELL" handleChange={setStockA} />
+          <StockInputForm label="B" tType="BUY" handleChange={setStockB} />
+          <StockInputForm label="C" tType="BUY" handleChange={setStockC} />
+          <StockInputForm label="D" tType="SELL" handleChange={setStockD} />
           <div className="input_container">
             <div className="input_element">
-              <h3>Exit Price:</h3>
+              <h3>Entry Price:</h3>
             </div>
             <div className="input_element">
               <TextField
-                id="exitPrice"
-                error={!Number(exitPrice)}
-                label="Exit Price"
+                id="entryPrice"
+                error={!Number(entryPrice)}
+                label="Entry Price"
                 variant="outlined"
-                value={exitPrice}
+                value={entryPrice}
                 onChange={(event) => {
-                  setExitPrice(event.target.value);
+                  setEntryPrice(event.target.value);
                 }}
               />
             </div>
@@ -101,7 +93,7 @@ const InputForm = () => {
       </div>
     );
   } else {
-    return <div>Done!</div>;
+    return <div>Check Console</div>;
   }
 };
 
