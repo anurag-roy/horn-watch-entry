@@ -93,12 +93,12 @@ const watchHornEntry = (stockA, stockB, stockC, stockD, entryPrice) => {
     if (!placedOrder) {
       // Check tick and update corresponding stock bid price
       // 2nd Seller's Bud for stock to BUY
-      // 2nd Buyer's Bid for stock to SELL
+      // 1st Buyer's Bid for stock to SELL
       ticks.forEach((t) => {
         if (t.instrument_token == aToken) {
           if (t.depth) {
             if (t.depth.buy) {
-              aBuyersBid = t.depth.buy[1].price;
+              aBuyersBid = t.depth.buy[0].price;
             }
           }
         } else if (t.instrument_token == bToken) {
@@ -116,7 +116,7 @@ const watchHornEntry = (stockA, stockB, stockC, stockD, entryPrice) => {
         } else if (t.instrument_token == dToken) {
           if (t.depth) {
             if (t.depth.buy) {
-              dBuyersBid = t.depth.buy[1].price;
+              dBuyersBid = t.depth.buy[0].price;
             }
           }
         }
